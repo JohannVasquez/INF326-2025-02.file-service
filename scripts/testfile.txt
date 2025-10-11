@@ -1,2 +1,0 @@
-Este es un archivo de prueba para el servicio de archivos.
-Generado para pruebas con scripts/upload_example.py

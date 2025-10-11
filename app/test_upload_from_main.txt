@@ -1,0 +1,2 @@
+Archivo de prueba para subir desde el proceso principal (main).
+Contenido generado automáticamente para pruebas.

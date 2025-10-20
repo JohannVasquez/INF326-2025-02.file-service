@@ -1,0 +1,75 @@
+services:
+  api:
+    build: .
+    container_name: files-api
+    env_file: .env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      - db
+      - minio
+      - rabbitmq
+    volumes:
+      - ./:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: bash -lc "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
+
+  db:
+    image: postgres:16-alpine
+    container_name: files-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-filesvc}
+      POSTGRES_USER: ${POSTGRES_USER:-filesvc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-filesvc}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-filesvc} -d ${POSTGRES_DB:-filesvc}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: files-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio:/data
+
+  create-bucket:
+    image: minio/mc
+    container_name: files-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin};
+      if ! /usr/bin/mc ls local/${MINIO_BUCKET:-files}; then
+        /usr/bin/mc mb local/${MINIO_BUCKET:-files};
+      fi;
+      /usr/bin/mc anonymous set download local/${MINIO_BUCKET:-files};
+      "
+    restart: "no"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: files-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+
+volumes:
+  pgdata:
+  minio:

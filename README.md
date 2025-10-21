@@ -2,6 +2,15 @@
 
 Microservicio REST para **subir y asociar archivos** a **mensajes** o **hilos**, almacenarlos en **MinIO (S3)**, registrar metadatos en **PostgreSQL**, y **emitir eventos** a **RabbitMQ** para indexación. Incluye versionamiento de API (`/v1`), migraciones con **Alembic**, manejo de errores consistente y documentación OpenAPI automática.
 
+Grupo 7 – Servicio de Archivos
+Felipe Campaña 202173517-8
+Johann Vasquez 202173577-1
+Javier Gomez 202173519-4
+
+## LINK VIDEO
+
+https://1drv.ms/v/c/cd32fe963975dbf4/EbImFpuroc9PkcE-dCCIo5MBRrQUZvmNzHnoPej16ALBYg
+
 ## Stack
 - FastAPI + Uvicorn
 - PostgreSQL 16 + SQLAlchemy 2 + Alembic
@@ -20,7 +29,7 @@ Microservicio REST para **subir y asociar archivos** a **mensajes** o **hilos**,
 ## Rápido inicio
 
 ```bash
-cp .env.example .env
+cp .env.example .env #en caso de que salga una advertencia hay que activar esta configuración "python.terminal.useEnvFile"
 docker compose up --build
 # API: http://localhost:8080/docs
 # MinIO Console: http://localhost:9001 (user/pass del .env)

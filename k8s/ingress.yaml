@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: file-service-ingress
+  namespace: file-service
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # Permitir HTTP
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Deshabilitado temporalmente
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: file-service.inf326.cl  # Cambia esto por tu dominio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: file-service-api
+            port:
+              number: 80
+  # tls:  # Deshabilitado temporalmente para permitir HTTP
+  # - hosts:
+  #   - file-service.inf326.cl
+  #   secretName: file-service-tls

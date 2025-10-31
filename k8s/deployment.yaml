@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-service-api
+  namespace: file-service
+  labels:
+    app: file-service-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: file-service-api
+  template:
+    metadata:
+      labels:
+        app: file-service-api
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;']
+      - name: wait-for-minio
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z minio-service 9000; do echo waiting for minio; sleep 2; done;']
+      - name: wait-for-rabbitmq
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z rabbitmq-service 5672; do echo waiting for rabbitmq; sleep 2; done;']
+      - name: run-migrations
+        image: felipe12309/file-service:latest
+        command: ['alembic', 'upgrade', 'head']
+        envFrom:
+        - configMapRef:
+            name: file-service-config
+        - secretRef:
+            name: file-service-secrets
+      containers:
+      - name: api
+        image: felipe12309/file-service:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: file-service-config
+        - secretRef:
+            name: file-service-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-service-api
+  namespace: file-service
+spec:
+  selector:
+    app: file-service-api
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP

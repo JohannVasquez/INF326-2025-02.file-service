@@ -133,7 +133,6 @@ jobs:
 
     - name: Configure kubectl
       env:
-        KUBECONFIG_SECRET: ${{ secrets.KUBE_CONFIG }}
         DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         K8S_CLUSTER_CA_DATA: ${{ secrets.K8S_CLUSTER_CA_DATA }}
         K8S_CLUSTER_SERVER: ${{ secrets.K8S_CLUSTER_SERVER }}
@@ -142,23 +141,13 @@ jobs:
         K8S_CONTEXT_NAME: ${{ secrets.K8S_CONTEXT_NAME }}
       run: |
         mkdir -p $HOME/.kube
-        # Try to decode as base64 first; if that fails, treat the secret as raw YAML.
-        set -e
-        echo "Writing candidate kubeconfig to /tmp/kubeconf_candidate"
-        printf '%s' "$KUBECONFIG_SECRET" > /tmp/kubeconf_candidate
-        if echo "$KUBECONFIG_SECRET" | base64 --decode > /tmp/kubeconf_dec 2>/dev/null; then
-          # If decoded file looks like a kubeconfig (contains 'apiVersion' or 'clusters'), use it.
-          if grep -q "apiVersion" /tmp/kubeconf_dec || grep -q "clusters:" /tmp/kubeconf_dec; then
-            envsubst < /tmp/kubeconf_dec > $HOME/.kube/config
-          else
-            envsubst < /tmp/kubeconf_candidate > $HOME/.kube/config
-          fi
-        else
-          envsubst < /tmp/kubeconf_candidate > $HOME/.kube/config
-        fi
+        # Use the kubeconfig template from the repo and replace variables
+        envsubst < k8s-inf326-nyc1-kubeconfig.yaml > $HOME/.kube/config
         chmod 600 $HOME/.kube/config
-        # Cleanup temp files
-        rm -f /tmp/kubeconf_candidate /tmp/kubeconf_dec
+        
+        # Debug: verify config was created
+        echo "Kubeconfig created, size: $(wc -c < $HOME/.kube/config) bytes"
+        echo "Cluster server: $K8S_CLUSTER_SERVER"
 
     - name: Verify cluster connection
       run: |

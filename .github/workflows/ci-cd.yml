@@ -115,9 +115,24 @@ jobs:
         version: 'latest'
 
     - name: Configure kubectl
+      env:
+        KUBECONFIG_SECRET: ${{ secrets.KUBE_CONFIG }}
       run: |
         mkdir -p $HOME/.kube
-        echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+        # Try to decode as base64 first; if that fails, treat the secret as raw YAML.
+        set -e
+        echo "Writing candidate kubeconfig to /tmp/kubeconf_candidate"
+        printf '%s' "$KUBECONFIG_SECRET" > /tmp/kubeconf_candidate
+        if echo "$KUBECONFIG_SECRET" | base64 --decode > /tmp/kubeconf_dec 2>/dev/null; then
+          # If decoded file looks like a kubeconfig (contains 'apiVersion' or 'clusters'), use it.
+          if grep -q "apiVersion" /tmp/kubeconf_dec || grep -q "clusters:" /tmp/kubeconf_dec; then
+            mv /tmp/kubeconf_dec $HOME/.kube/config
+          else
+            mv /tmp/kubeconf_candidate $HOME/.kube/config
+          fi
+        else
+          mv /tmp/kubeconf_candidate $HOME/.kube/config
+        fi
         chmod 600 $HOME/.kube/config
 
     - name: Verify cluster connection

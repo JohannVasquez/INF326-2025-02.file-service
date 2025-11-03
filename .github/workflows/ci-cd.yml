@@ -175,6 +175,7 @@ jobs:
     - name: Verify cluster connection
       run: |
         kubectl cluster-info
+        kubectl cluster-info dump
         kubectl get nodes
 
     - name: Create namespace if not exists

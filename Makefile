@@ -60,3 +60,4 @@ preflight:
 	@echo ""
 	@echo "Verificando nodos..."
 	@kubectl get nodes
+

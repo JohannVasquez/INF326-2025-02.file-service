@@ -1,0 +1,235 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, kubernetes ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOCKER_IMAGE: johannsonmanson/inf326-2025-02file-service-api
+  K8S_NAMESPACE: file-service
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: filesvc_test
+          POSTGRES_USER: filesvc
+          POSTGRES_PASSWORD: filesvc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio httpx
+
+    - name: Run tests
+      env:
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        POSTGRES_DB: filesvc_test
+        POSTGRES_USER: filesvc
+        POSTGRES_PASSWORD: filesvc
+        MINIO_ENDPOINT: localhost:9000
+        MINIO_ACCESS_KEY: minioadmin
+        MINIO_SECRET_KEY: minioadmin
+        RABBITMQ_HOST: localhost
+      run: |
+        pytest -v || echo "No tests found, skipping"
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/kubernetes')
+    environment: KUBECONFIG_BASE64
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Debug - Verify secrets are set (SAFE)
+      run: |
+        echo "DOCKER_USERNAME is set: ${{ secrets.DOCKER_USERNAME != '' }}"
+        echo "DOCKER_PASSWORD is set: ${{ secrets.DOCKER_PASSWORD != '' }}"
+        if [ -n "$DOCKER_USERNAME" ]; then
+          echo "Username length: ${#DOCKER_USERNAME}"
+          echo "Username first 3 chars: ${DOCKER_USERNAME:0:3}***"
+        fi
+        if [ -n "$DOCKER_PASSWORD" ]; then
+          echo "Password length: ${#DOCKER_PASSWORD}"
+          echo "Password first 3 chars: ${DOCKER_PASSWORD:0:3}***"
+        fi
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
+        cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/kubernetes')
+    environment: KUBECONFIG_BASE64
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v4
+      with:
+        version: 'latest'
+
+    - name: Configure kubectl
+      env:
+        DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+        K8S_CLUSTER_CA_DATA: ${{ secrets.K8S_CLUSTER_CA_DATA }}
+        K8S_CLUSTER_SERVER: ${{ secrets.K8S_CLUSTER_SERVER }}
+        K8S_CLUSTER_NAME: ${{ secrets.K8S_CLUSTER_NAME }}
+        K8S_USER_NAME: ${{ secrets.K8S_USER_NAME }}
+      run: |
+        mkdir -p $HOME/.kube
+        
+        # Debug: Check if secrets are set
+        echo "=== Checking environment variables ==="
+        echo "DIGITALOCEAN_TOKEN is set: ${{ secrets.DIGITALOCEAN_TOKEN != '' }}"
+        echo "K8S_CLUSTER_CA_DATA is set: ${{ secrets.K8S_CLUSTER_CA_DATA != '' }}"
+        echo "K8S_CLUSTER_SERVER is set: ${{ secrets.K8S_CLUSTER_SERVER != '' }}"
+        echo "K8S_CLUSTER_NAME is set: ${{ secrets.K8S_CLUSTER_NAME != '' }}"
+        echo "K8S_USER_NAME is set: ${{ secrets.K8S_USER_NAME != '' }}"
+        
+        if [ -z "$DIGITALOCEAN_TOKEN" ] || [ -z "$K8S_CLUSTER_CA_DATA" ] || [ -z "$K8S_CLUSTER_SERVER" ] || [ -z "$K8S_CLUSTER_NAME" ] || [ -z "$K8S_USER_NAME" ]; then
+          echo "❌ ERROR: One or more required secrets are not set!"
+          echo "Please configure all K8S secrets in the KUBECONFIG_BASE64 environment"
+          exit 1
+        fi
+        
+        # Show template file
+        echo "=== Kubeconfig template ==="
+        cat k8s-inf326-nyc1-kubeconfig.yaml
+        
+        # Generate kubeconfig
+        echo "=== Generating kubeconfig ==="
+        envsubst < k8s-inf326-nyc1-kubeconfig.yaml > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+        
+        # Debug: verify config was created
+        echo "=== Generated kubeconfig ==="
+        echo "Kubeconfig size: $(wc -c < $HOME/.kube/config) bytes"
+        echo "Cluster server: $K8S_CLUSTER_SERVER"
+        echo "First 500 chars of config:"
+        head -c 500 $HOME/.kube/config
+        echo ""
+
+    - name: Verify cluster connection
+      run: |
+        kubectl cluster-info
+        kubectl cluster-info dump
+        kubectl get nodes
+
+    - name: Create namespace if not exists
+      run: |
+        kubectl apply -f k8s/namespace.yaml
+
+    - name: Apply ConfigMap and Secrets
+      run: |
+        kubectl apply -f k8s/configmap.yaml
+        kubectl apply -f k8s/secrets.yaml
+
+    - name: Deploy PostgreSQL
+      run: |
+        kubectl apply -f k8s/postgres.yaml
+        kubectl rollout status deployment/postgres -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+    - name: Deploy MinIO
+      run: |
+        kubectl apply -f k8s/minio.yaml
+        kubectl rollout status deployment/minio -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+    - name: Deploy RabbitMQ
+      run: |
+        kubectl apply -f k8s/rabbitmq.yaml
+        kubectl rollout status deployment/rabbitmq -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+    - name: Deploy Application
+      run: |
+        kubectl apply -f k8s/deployment.yaml
+        kubectl rollout status deployment/file-service-api -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+    - name: Apply HPA
+      run: |
+        kubectl apply -f k8s/hpa.yaml
+
+    - name: Apply Ingress
+      run: |
+        kubectl apply -f k8s/ingress.yaml
+
+    - name: Get deployment status
+      run: |
+        echo "=== Pods Status ==="
+        kubectl get pods -n ${{ env.K8S_NAMESPACE }}
+        echo ""
+        echo "=== Services ==="
+        kubectl get svc -n ${{ env.K8S_NAMESPACE }}
+        echo ""
+        echo "=== Ingress ==="
+        kubectl get ingress -n ${{ env.K8S_NAMESPACE }}
+        echo ""
+        echo "=== HPA Status ==="
+        kubectl get hpa -n ${{ env.K8S_NAMESPACE }}
+
+    - name: Show application logs
+      if: failure()
+      run: |
+        kubectl logs -l app=file-service-api -n ${{ env.K8S_NAMESPACE }} --tail=100

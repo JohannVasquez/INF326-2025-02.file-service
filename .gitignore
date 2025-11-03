@@ -48,6 +48,12 @@ coverage.xml
 *.cover
 *.py.cover
 .hypothesis/
+
+# Kubernetes secrets - IMPORTANTE
+kubeconfig.base64.txt
+*.base64.txt
+
+kubeconfig
 .pytest_cache/
 cover/
 

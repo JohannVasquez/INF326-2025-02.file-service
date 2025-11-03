@@ -138,7 +138,6 @@ jobs:
         K8S_CLUSTER_SERVER: ${{ secrets.K8S_CLUSTER_SERVER }}
         K8S_CLUSTER_NAME: ${{ secrets.K8S_CLUSTER_NAME }}
         K8S_USER_NAME: ${{ secrets.K8S_USER_NAME }}
-        K8S_CONTEXT_NAME: ${{ secrets.K8S_CONTEXT_NAME }}
       run: |
         mkdir -p $HOME/.kube
         # Use the kubeconfig template from the repo and replace variables

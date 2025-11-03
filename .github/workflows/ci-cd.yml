@@ -117,6 +117,7 @@ jobs:
     - name: Configure kubectl
       env:
         KUBECONFIG_SECRET: ${{ secrets.KUBE_CONFIG }}
+        DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
       run: |
         mkdir -p $HOME/.kube
         # Try to decode as base64 first; if that fails, treat the secret as raw YAML.
@@ -126,14 +127,16 @@ jobs:
         if echo "$KUBECONFIG_SECRET" | base64 --decode > /tmp/kubeconf_dec 2>/dev/null; then
           # If decoded file looks like a kubeconfig (contains 'apiVersion' or 'clusters'), use it.
           if grep -q "apiVersion" /tmp/kubeconf_dec || grep -q "clusters:" /tmp/kubeconf_dec; then
-            mv /tmp/kubeconf_dec $HOME/.kube/config
+            envsubst < /tmp/kubeconf_dec > $HOME/.kube/config
           else
-            mv /tmp/kubeconf_candidate $HOME/.kube/config
+            envsubst < /tmp/kubeconf_candidate > $HOME/.kube/config
           fi
         else
-          mv /tmp/kubeconf_candidate $HOME/.kube/config
+          envsubst < /tmp/kubeconf_candidate > $HOME/.kube/config
         fi
         chmod 600 $HOME/.kube/config
+        # Cleanup temp files
+        rm -f /tmp/kubeconf_candidate /tmp/kubeconf_dec
 
     - name: Verify cluster connection
       run: |

@@ -135,6 +135,11 @@ jobs:
       env:
         KUBECONFIG_SECRET: ${{ secrets.KUBE_CONFIG }}
         DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+        K8S_CLUSTER_CA_DATA: ${{ secrets.K8S_CLUSTER_CA_DATA }}
+        K8S_CLUSTER_SERVER: ${{ secrets.K8S_CLUSTER_SERVER }}
+        K8S_CLUSTER_NAME: ${{ secrets.K8S_CLUSTER_NAME }}
+        K8S_USER_NAME: ${{ secrets.K8S_USER_NAME }}
+        K8S_CONTEXT_NAME: ${{ secrets.K8S_CONTEXT_NAME }}
       run: |
         mkdir -p $HOME/.kube
         # Try to decode as base64 first; if that fails, treat the secret as raw YAML.

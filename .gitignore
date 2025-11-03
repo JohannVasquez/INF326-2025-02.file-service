@@ -52,7 +52,6 @@ coverage.xml
 # Kubernetes secrets - IMPORTANTE
 kubeconfig.base64.txt
 *.base64.txt
-k8s-*-kubeconfig.yaml
 k8s-*.yaml
 *kubeconfig*.yaml
 *kubeconfig*.yml

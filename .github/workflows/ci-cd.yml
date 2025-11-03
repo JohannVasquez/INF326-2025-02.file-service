@@ -140,13 +140,37 @@ jobs:
         K8S_USER_NAME: ${{ secrets.K8S_USER_NAME }}
       run: |
         mkdir -p $HOME/.kube
-        # Use the kubeconfig template from the repo and replace variables
+        
+        # Debug: Check if secrets are set
+        echo "=== Checking environment variables ==="
+        echo "DIGITALOCEAN_TOKEN is set: ${{ secrets.DIGITALOCEAN_TOKEN != '' }}"
+        echo "K8S_CLUSTER_CA_DATA is set: ${{ secrets.K8S_CLUSTER_CA_DATA != '' }}"
+        echo "K8S_CLUSTER_SERVER is set: ${{ secrets.K8S_CLUSTER_SERVER != '' }}"
+        echo "K8S_CLUSTER_NAME is set: ${{ secrets.K8S_CLUSTER_NAME != '' }}"
+        echo "K8S_USER_NAME is set: ${{ secrets.K8S_USER_NAME != '' }}"
+        
+        if [ -z "$DIGITALOCEAN_TOKEN" ] || [ -z "$K8S_CLUSTER_CA_DATA" ] || [ -z "$K8S_CLUSTER_SERVER" ] || [ -z "$K8S_CLUSTER_NAME" ] || [ -z "$K8S_USER_NAME" ]; then
+          echo "❌ ERROR: One or more required secrets are not set!"
+          echo "Please configure all K8S secrets in the KUBECONFIG_BASE64 environment"
+          exit 1
+        fi
+        
+        # Show template file
+        echo "=== Kubeconfig template ==="
+        cat k8s-inf326-nyc1-kubeconfig.yaml
+        
+        # Generate kubeconfig
+        echo "=== Generating kubeconfig ==="
         envsubst < k8s-inf326-nyc1-kubeconfig.yaml > $HOME/.kube/config
         chmod 600 $HOME/.kube/config
         
         # Debug: verify config was created
-        echo "Kubeconfig created, size: $(wc -c < $HOME/.kube/config) bytes"
+        echo "=== Generated kubeconfig ==="
+        echo "Kubeconfig size: $(wc -c < $HOME/.kube/config) bytes"
         echo "Cluster server: $K8S_CLUSTER_SERVER"
+        echo "First 500 chars of config:"
+        head -c 500 $HOME/.kube/config
+        echo ""
 
     - name: Verify cluster connection
       run: |

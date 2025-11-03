@@ -48,6 +48,12 @@ coverage.xml
 *.cover
 *.py.cover
 .hypothesis/
+
+# Kubernetes secrets - IMPORTANTE
+kubeconfig.base64.txt
+*.base64.txt
+k8s-*-kubeconfig.yaml
+!k8s-inf326-nyc1-kubeconfig.yaml
 .pytest_cache/
 cover/
 
@@ -205,3 +211,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+k8s-inf326-nyc1-kubeconfig.yaml

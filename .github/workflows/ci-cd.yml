@@ -218,18 +218,37 @@ jobs:
     - name: Get deployment status
       run: |
         echo "=== Pods Status ==="
-        kubectl get pods -n ${{ env.K8S_NAMESPACE }}
+        kubectl get pods -n ${{ env.K8S_NAMESPACE }} || true
         echo ""
         echo "=== Services ==="
-        kubectl get svc -n ${{ env.K8S_NAMESPACE }}
+        kubectl get svc -n ${{ env.K8S_NAMESPACE }} || true
         echo ""
         echo "=== Ingress ==="
-        kubectl get ingress -n ${{ env.K8S_NAMESPACE }}
+        kubectl get ingress -n ${{ env.K8S_NAMESPACE }} || true
         echo ""
         echo "=== HPA Status ==="
-        kubectl get hpa -n ${{ env.K8S_NAMESPACE }}
+        kubectl get hpa -n ${{ env.K8S_NAMESPACE }} || true
 
-    - name: Show application logs
-      if: failure()
+    - name: Check ingress controller
       run: |
-        kubectl logs -l app=file-service-api -n ${{ env.K8S_NAMESPACE }} --tail=100
+        echo "=== Ingress controller pods (ingress-nginx) ==="
+        kubectl get pods -n ingress-nginx || echo "No ingress-nginx namespace found"
+        echo ""
+        echo "=== Ingress controller services ==="
+        kubectl get svc -n ingress-nginx || echo "No ingress-nginx svc found"
+
+    - name: Describe Ingress and show external IPs
+      run: |
+        echo "=== Describe ingress ==="
+        kubectl describe ingress file-service-ingress -n ${{ env.K8S_NAMESPACE }} || true
+        echo ""
+        echo "=== Service external IP / endpoints ==="
+        kubectl get svc -n ${{ env.K8S_NAMESPACE }} file-service-api -o wide || true
+        echo ""
+        echo "=== Ingress (wide) ==="
+        kubectl get ingress -n ${{ env.K8S_NAMESPACE }} -o wide || true
+
+    - name: Show application logs (diagnostics)
+      run: |
+        echo "=== Application logs (last 200 lines) ==="
+        kubectl logs -l app=file-service-api -n ${{ env.K8S_NAMESPACE }} --tail=200 || true

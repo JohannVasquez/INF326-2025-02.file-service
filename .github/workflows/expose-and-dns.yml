@@ -16,7 +16,7 @@ jobs:
   expose-and-dns:
     runs-on: ubuntu-latest
     env:
-      DO_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}            # DigitalOcean API token (required)
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN}}            # DigitalOcean API token (required)
       INGRESS_NAMESPACE: ${{ env.INGRESS_NAMESPACE }}
       INGRESS_SERVICE_NAME: ${{ env.INGRESS_SERVICE_NAME }}
       INGRESS_HOST: ${{ env.INGRESS_HOST }}

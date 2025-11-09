@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_IMAGE: johannsonmanson/inf326-2025-02file-service-api
+  DOCKER_IMAGE: soloimsad/inf326-2025-02file-service-api
   K8S_NAMESPACE: file-service
 
 jobs:
@@ -215,41 +215,43 @@ jobs:
       run: |
         kubectl apply -f k8s/ingress.yaml
 
-    - name: Ensure DNS A record (DigitalOcean)
+    - name: Get Ingress IP (Access via IP)
       run: |
-        echo "=== Ensure DNS A record ==="
-        # Install jq for JSON parsing
-        sudo apt-get update && sudo apt-get install -y jq
-
-        DNS_DOMAIN="inf326.cl"
-        DNS_NAME="file-service"
-
-        # Read ingress IP
-        IP=$(kubectl get ingress file-service-ingress -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "=== 🌐 Obtener IP del LoadBalancer ==="
+        echo ""
+        echo "⏳ Esperando a que se asigne la IP externa..."
+        
+        # Esperar hasta 2 minutos para que se asigne la IP
+        for i in {1..24}; do
+          IP=$(kubectl get ingress file-service-ingress -n ${{ env.K8S_NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          
+          if [ -n "$IP" ]; then
+            echo ""
+            echo "✅ ¡IP Asignada exitosamente!"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "  📡 Tu servicio está accesible en:"
+            echo "     http://$IP"
+            echo ""
+            echo "  📝 Endpoints disponibles:"
+            echo "     • Health:    http://$IP/health"
+            echo "     • Docs:      http://$IP/docs"
+            echo "     • Upload:    http://$IP/upload"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "💡 Comparte esta IP con otros usuarios para acceder"
+            echo ""
+            break
+          fi
+          
+          echo "  Intento $i/24 - Esperando IP..."
+          sleep 5
+        done
+        
         if [ -z "$IP" ]; then
-          echo "No ingress IP available yet; skipping DNS update."
-          exit 0
+          echo "⚠️  No se pudo obtener la IP automáticamente"
+          echo "   Ejecuta manualmente: kubectl get ingress -n ${{ env.K8S_NAMESPACE }}"
         fi
-
-        echo "Ingress IP: $IP"
-
-        # Check existing A record
-        RECORDS=$(curl -s -X GET -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" "https://api.digitalocean.com/v2/domains/${DNS_DOMAIN}/records")
-        EXISTING_ID=$(echo "$RECORDS" | jq -r --arg name "$DNS_NAME" '.domain_records[] | select(.type=="A" and .name==$name) | .id' || true)
-
-        if [ -n "$EXISTING_ID" ] && [ "$EXISTING_ID" != "null" ]; then
-          echo "Updating existing record id $EXISTING_ID"
-          curl -s -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-            -d "{\"data\": \"$IP\"}" \
-            "https://api.digitalocean.com/v2/domains/${DNS_DOMAIN}/records/$EXISTING_ID" || true
-        else
-          echo "Creating new A record $DNS_NAME.$DNS_DOMAIN -> $IP"
-          curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-            -d "{\"type\": \"A\", \"name\": \"$DNS_NAME\", \"data\": \"$IP\", \"ttl\": 300}" \
-            "https://api.digitalocean.com/v2/domains/${DNS_DOMAIN}/records" || true
-        fi
-      env:
-        DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
     - name: Get deployment status
       run: |

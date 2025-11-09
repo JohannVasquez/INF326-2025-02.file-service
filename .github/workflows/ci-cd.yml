@@ -234,7 +234,7 @@ jobs:
             echo "     http://$IP"
             echo ""
             echo "  📝 Endpoints disponibles:"
-            echo "     • Health:    http://$IP/health"
+            echo "     • Health:    http://$IP/healthz"
             echo "     • Docs:      http://$IP/docs"
             echo "     • Upload:    http://$IP/upload"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

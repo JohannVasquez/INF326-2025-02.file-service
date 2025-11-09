@@ -54,7 +54,7 @@ try {
     Write-Host "     http://$ip" -ForegroundColor White
     Write-Host ""
     Write-Host "  Endpoints disponibles:" -ForegroundColor Yellow
-    Write-Host "     Health:    http://$ip/health" -ForegroundColor White
+    Write-Host "     Health:    http://$ip/healthz" -ForegroundColor White
     Write-Host "     Docs:      http://$ip/docs" -ForegroundColor White
     Write-Host "     Upload:    http://$ip/upload" -ForegroundColor White
     Write-Host "     Files:     http://$ip/files" -ForegroundColor White
@@ -66,7 +66,7 @@ try {
     # Verificar si el servicio responde
     Write-Host "Verificando conectividad..." -ForegroundColor Cyan
     try {
-        $response = Invoke-WebRequest -Uri "http://$ip/health" -TimeoutSec 10 -UseBasicParsing 2>$null
+        $response = Invoke-WebRequest -Uri "http://$ip/healthz" -TimeoutSec 10 -UseBasicParsing 2>$null
         Write-Host "El servicio esta respondiendo correctamente" -ForegroundColor Green
     } catch {
         Write-Host "No se pudo conectar al servicio (puede tardar unos minutos)" -ForegroundColor Yellow

@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_IMAGE: soloimsad/inf326-2025-02file-service-api
+  DOCKER_IMAGE: johannsonmanson/inf326-2025-02file-service-api
   K8S_NAMESPACE: file-service
 
 jobs:

@@ -107,40 +107,50 @@ Respuestas de error uniformes:
 
 ## 🚀 Despliegue en Kubernetes
 
-Este proyecto incluye configuración completa para Kubernetes con:
-- ✅ Autoscaling horizontal (HPA)
-- ✅ URL pública mediante Ingress
-- ✅ CI/CD con GitHub Actions
-- ✅ Alta disponibilidad con múltiples réplicas
+### 🌐 Servicio en Producción
 
-### Guía Rápida
+El servicio está desplegado y **accesible públicamente** en DigitalOcean Kubernetes:
 
-1. **Configurar kubectl**:
+**🔗 URL Base:** `http://134.199.176.197`
+
+**📝 Endpoints Públicos:**
+- **Documentación API:** http://134.199.176.197/docs
+- **Health Check:** http://134.199.176.197/healthz
+- **OpenAPI Schema:** http://134.199.176.197/openapi.json
+
+### ⚙️ Características del Cluster
+
+- ✅ **Alta disponibilidad**: 2 réplicas de la API
+- ✅ **Autoscaling horizontal**: HPA configurado (2-10 pods)
+- ✅ **Acceso público**: Ingress con NGINX
+- ✅ **CI/CD automático**: GitHub Actions
+- ✅ **Almacenamiento persistente**: PostgreSQL + MinIO con PVCs
+
+### 📊 Estado del Cluster
+
+Para verificar el estado actual del despliegue:
+
 ```powershell
-$env:KUBECONFIG="c:\Users\pipe2\OneDrive\Documentos\GitHub\INF326-2025-02.file-service\k8s-inf326-nyc1-kubeconfig.yaml"
-kubectl cluster-info
+# Configurar kubectl (requerido una vez por sesión)
+$env:KUBECONFIG = "c:\ruta\a\archivo\k8s-inf326-nyc1-kubeconfig.yaml"
+
+# Obtener IP pública del servicio
+.\scripts\get-ip.ps1
+
+# Ver estado de todos los recursos
+kubectl get all -n file-service
+
+# Ver logs de la aplicación
+kubectl logs -l app=file-service-api -n file-service --tail=50
 ```
 
-2. **Desplegar manualmente**:
-```powershell
-.\scripts\deploy.ps1
-```
+### 🔄 CI/CD Automático
 
-3. **Ver estado**:
-```powershell
-.\scripts\status.ps1
-# O usar k9s para interfaz interactiva
-k9s -n file-service
-```
+El pipeline de GitHub Actions se ejecuta automáticamente en cada push a `main`:
 
-### CI/CD Automático
+1. ✅ **Tests**: Ejecuta suite de pruebas
+2. ✅ **Build**: Construye imagen Docker
+3. ✅ **Push**: Sube imagen a Docker Hub
+4. ✅ **Deploy**: Despliega al cluster de Kubernetes
+5. ✅ **Health Check**: Verifica que el servicio responda
 
-El pipeline de GitHub Actions se ejecuta automáticamente en push a `main` o `kubernetes`:
-1. Ejecuta tests
-2. Construye y sube imagen Docker
-3. Despliega al cluster Kubernetes
-
-**Ver documentación completa**: [KUBERNETES.md](./KUBERNETES.md)
-
-## Licencia
-MIT

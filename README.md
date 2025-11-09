@@ -14,12 +14,6 @@
 - Johann Vasquez 202173577-1  
 - Javier Gomez 202173519-4
 
-## 🎥 LINK VIDEO
-
-https://1drv.ms/v/c/cd32fe963975dbf4/EbImFpuroc9PkcE-dCCIo5MBRrQUZvmNzHnoPej16ALBYg
-
----
-
 ## 🎯 Características Principales
 
 ✅ **Almacenamiento S3**: MinIO para archivos escalable  

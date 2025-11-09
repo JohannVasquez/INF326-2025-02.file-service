@@ -26,7 +26,7 @@ spec:
         image: busybox:1.35
         command: ['sh', '-c', 'until nc -z rabbitmq-service 5672; do echo waiting for rabbitmq; sleep 2; done;']
       - name: run-migrations
-        image: johannsonmanson/file-service:latest
+        image: soloimsad/file-service:latest
         command: ['alembic', 'upgrade', 'head']
         envFrom:
         - configMapRef:
@@ -35,7 +35,7 @@ spec:
             name: file-service-secrets
       containers:
       - name: api
-        image: johannsonmanson/file-service:latest
+        image: soloimsad/file-service:latest
         ports:
         - containerPort: 8080
         envFrom:

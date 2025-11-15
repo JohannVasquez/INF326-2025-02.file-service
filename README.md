@@ -148,3 +148,79 @@ El pipeline de GitHub Actions se ejecuta automáticamente en cada push a `main`:
 4. ✅ **Deploy**: Despliega al cluster de Kubernetes
 5. ✅ **Health Check**: Verifica que el servicio responda
 
+---
+
+## 🧪 Pruebas (FastAPI Testing)
+
+Las pruebas automatizadas validan todos los endpoints usando FastAPI Testing con `httpx.AsyncClient` y `ASGITransport` (no se levanta un servidor real). Se aíslan las dependencias externas (DB, MinIO, RabbitMQ) para que los tests sean rápidos y deterministas.
+
+### Cómo ejecutar
+
+```powershell
+# 1) Activar entorno virtual (Windows PowerShell)
+.\n+venv\Scripts\Activate.ps1
+
+# 2) Instalar dependencias (si es necesario)
+pip install -r requirements.txt
+
+# 3) Ejecutar la suite de pruebas
+pytest
+```
+
+Ejecutar un caso o archivo específico:
+
+```powershell
+pytest tests\test_files.py::test_upload_file_success -q
+pytest tests\test_health.py -q
+```
+
+Cobertura (opcional):
+
+```powershell
+pip install pytest-cov
+pytest --cov=app --cov-report=term-missing
+```
+
+### Qué validan los tests
+
+- Cliente HTTP asíncrono con `httpx.AsyncClient` + `ASGITransport` para invocar la app ASGI en memoria.
+- Base de datos aislada por prueba: `SQLite` en memoria con SQLAlchemy async; se hace override de la dependencia `get_session` para usar una `AsyncSession` contra un engine `sqlite+aiosqlite` efímero.
+- Infraestructura parcheada con `monkeypatch` para evitar efectos colaterales:
+  - MinIO: `put_object` y `presign_get` reemplazados por funciones deterministas.
+  - EventBus (RabbitMQ): `connect`/`publish` reemplazados por no-ops.
+  - `ensure_bucket()` anulado en startup.
+
+### Cobertura por endpoint
+
+- `GET /healthz`
+  - Responde 200 con `{ status: "ok", service, env }`.
+  - Estructura del JSON esperada.
+
+- `POST /v1/files`
+  - Éxito: carga archivo, persiste metadatos, devuelve `FileOut`.
+  - Error 400 si falta `message_id` y `thread_id` (se requiere al menos uno).
+
+- `GET /v1/files/{id}`
+  - Éxito: devuelve metadatos del archivo.
+  - 404 si no existe.
+
+- `GET /v1/files?message_id=...|thread_id=...`
+  - Éxito: lista filtrada por `message_id` o `thread_id`.
+  - 400 si no se envía ningún filtro.
+
+- `DELETE /v1/files/{id}`
+  - Éxito: eliminación lógica; luego `GET` del mismo id devuelve 404.
+  - 404 si el id no existe.
+
+- `POST /v1/files/{id}/presign-download`
+  - Éxito: retorna URL prefirmada y `expires_in`.
+  - 404 si no existe el id.
+
+### Estructura de pruebas
+
+- `tests/conftest.py`: Fixtures principales (cliente HTTP, DB en memoria, parches de infra).
+- `tests/test_health.py`: Casos de `/healthz`.
+- `tests/test_files.py`: Casos de subida, listado, obtención, eliminación y presign.
+
+En CI/CD, la etapa de Tests ejecuta esta suite automáticamente en cada push.
+

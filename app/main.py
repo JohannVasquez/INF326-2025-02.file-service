@@ -1,15 +1,23 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from .config import settings
 from .routers import files as files_router
 from .storage import ensure_bucket
 from .events import event_bus
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_bucket()
+    await event_bus.connect()
+    yield
+
 app = FastAPI(
     title="Servicio de Archivos",
     version="1.0.0",
-    default_response_class=JSONResponse
+    default_response_class=JSONResponse,
+    lifespan=lifespan,
 )
 
 # CORS (ajusta dominios en prod)
@@ -20,10 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def startup():
-    ensure_bucket()
-    await event_bus.connect()
+# Startup handled via lifespan above
 
 @app.get("/healthz")
 async def healthz():

@@ -1,0 +1,7 @@
+# Gateway Python
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+venv/
+.pytest_cache/

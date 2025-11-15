@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Chat Platform</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🎓 Academic Chat</h2>
+            <div class="user-info" id="userInfo">
+                <span id="username">Guest</span>
+                <span class="status-indicator" id="statusIndicator"></span>
+            </div>
+        </div>
+
+        <!-- Canales -->
+        <div class="channels-section">
+            <div class="section-header">
+                <h3>📚 Canales</h3>
+                <button class="btn-icon" onclick="showCreateChannelModal()" title="Crear canal">+</button>
+            </div>
+            <div id="channelsList" class="channels-list">
+                <!-- Canales se cargan dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Chatbots -->
+        <div class="chatbots-section">
+            <div class="section-header">
+                <h3>🤖 Chatbots</h3>
+            </div>
+            <div class="chatbots-list">
+                <button class="chatbot-btn" onclick="openChatbot('academic')">
+                    📖 Académico
+                </button>
+                <button class="chatbot-btn" onclick="openChatbot('utility')">
+                    ⚡ Utilidades
+                </button>
+                <button class="chatbot-btn" onclick="openChatbot('calc')">
+                    🔢 Calculadora
+                </button>
+                <button class="chatbot-btn" onclick="openChatbot('wiki')">
+                    📰 Wikipedia
+                </button>
+                <button class="chatbot-btn" onclick="openChatbot('programming')">
+                    💻 Programación
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="channel-info">
+                <h1 id="channelName">Selecciona un canal</h1>
+                <p id="channelDescription"></p>
+            </div>
+            <div class="top-bar-actions">
+                <button class="btn-icon" onclick="showSearch()" title="Buscar">🔍</button>
+                <button class="btn-icon" onclick="showSettings()" title="Configuración">⚙️</button>
+                <button class="btn-primary" onclick="showLoginModal()">Iniciar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Threads List -->
+        <div class="threads-container" id="threadsContainer">
+            <div class="threads-header">
+                <h2>💬 Hilos</h2>
+                <button class="btn-primary" onclick="showCreateThreadModal()">+ Nuevo Hilo</button>
+            </div>
+            <div id="threadsList" class="threads-list">
+                <!-- Hilos se cargan dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="messages-area" id="messagesArea" style="display: none;">
+            <div class="messages-header">
+                <button class="btn-back" onclick="backToThreads()">← Volver</button>
+                <div>
+                    <h2 id="threadTitle">Título del hilo</h2>
+                    <p id="threadInfo"></p>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <!-- Mensajes se cargan dinámicamente -->
+            </div>
+
+            <div class="message-input-area">
+                <button class="btn-icon" onclick="showFileUpload()" title="Adjuntar archivo">📎</button>
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Escribe un mensaje..." 
+                    rows="1"
+                    onkeydown="handleMessageKeydown(event)"
+                ></textarea>
+                <button class="btn-send" onclick="sendMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                <button type="submit" class="btn-primary">Entrar</button>
+                <p class="modal-footer">
+                    ¿No tienes cuenta? <a href="#" onclick="showRegisterModal()">Regístrate</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('registerModal')">&times;</span>
+            <h2>Registro</h2>
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <input type="text" id="registerUsername" placeholder="Nombre de usuario" required>
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Contraseña" required>
+                <input type="text" id="registerFullName" placeholder="Nombre completo (opcional)">
+                <button type="submit" class="btn-primary">Registrarse</button>
+                <p class="modal-footer">
+                    ¿Ya tienes cuenta? <a href="#" onclick="showLoginModal()">Inicia sesión</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Channel Modal -->
+    <div id="createChannelModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('createChannelModal')">&times;</span>
+            <h2>Crear Canal</h2>
+            <form id="createChannelForm" onsubmit="handleCreateChannel(event)">
+                <input type="text" id="channelName" placeholder="Nombre del canal" required>
+                <textarea id="channelDescription" placeholder="Descripción (opcional)" rows="3"></textarea>
+                <input type="text" id="channelSubject" placeholder="Asignatura (opcional)">
+                <label>
+                    <input type="checkbox" id="channelPrivate"> Canal privado
+                </label>
+                <button type="submit" class="btn-primary">Crear Canal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Thread Modal -->
+    <div id="createThreadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('createThreadModal')">&times;</span>
+            <h2>Crear Hilo</h2>
+            <form id="createThreadForm" onsubmit="handleCreateThread(event)">
+                <input type="text" id="threadTitle" placeholder="Título del hilo" required>
+                <textarea id="threadContent" placeholder="Contenido inicial (opcional)" rows="4"></textarea>
+                <button type="submit" class="btn-primary">Crear Hilo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chatbot Modal -->
+    <div id="chatbotModal" class="modal">
+        <div class="modal-content chatbot-modal">
+            <span class="close" onclick="closeModal('chatbotModal')">&times;</span>
+            <h2 id="chatbotTitle">Chatbot</h2>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <!-- Mensajes del chatbot -->
+            </div>
+            <div class="chatbot-input-area">
+                <input 
+                    type="text" 
+                    id="chatbotInput" 
+                    placeholder="Pregunta algo..."
+                    onkeydown="handleChatbotKeydown(event)"
+                >
+                <button class="btn-send" onclick="sendChatbotMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('searchModal')">&times;</span>
+            <h2>🔍 Buscar</h2>
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Buscar mensajes, hilos, archivos..."
+                oninput="handleSearch()"
+            >
+            <div id="searchResults" class="search-results">
+                <!-- Resultados de búsqueda -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

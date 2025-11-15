@@ -112,6 +112,27 @@ El servicio está desplegado y **accesible públicamente** en DigitalOcean Kuber
 - **Health Check:** http://134.199.176.197/healthz
 - **OpenAPI Schema:** http://134.199.176.197/openapi.json
 
+### 🖥️ Interfaz Web y API Gateway
+
+Además del servicio de archivos, el proyecto incluye un **API Gateway con interfaz web** que unifica todos los microservicios:
+
+**🌐 Gateway Web:** `http://134.199.176.197` (cuando se despliegue)
+
+La interfaz web permite:
+- ✅ **Chat en tiempo real** con canales y hilos
+- ✅ **Subida de archivos** integrada
+- ✅ **5 chatbots especializados** (Académico, Utilidades, Calculadora, Wikipedia, Programación)
+- ✅ **Búsqueda de contenido** en todos los servicios
+- ✅ **Gestión de usuarios** con autenticación
+- ✅ **Interfaz moderna** tipo Discord/Slack
+
+**📖 Ver documentación completa:** [gateway/README.md](./gateway/README.md)
+
+**🚀 Desplegar gateway:**
+```powershell
+.\scripts\deploy-gateway.ps1
+```
+
 ### ⚙️ Características del Cluster
 
 - ✅ **Alta disponibilidad**: 2 réplicas de la API

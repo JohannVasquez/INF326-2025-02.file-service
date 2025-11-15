@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Archivos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📁 Sistema de Gestión de Archivos</h1>
+            <p class="subtitle">Grupo 7 - INF326</p>
+            <div class="status-indicator">
+                <span id="statusDot" class="status-dot"></span>
+                <span id="statusText">Verificando conexión...</span>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('upload')">
+                📤 Subir Archivo
+            </button>
+            <button class="tab-button" onclick="showTab('list')">
+                📋 Mis Archivos
+            </button>
+            <button class="tab-button" onclick="showTab('search')">
+                🔍 Buscar
+            </button>
+            <button class="tab-button" onclick="showTab('about')">
+                ℹ️ Acerca de
+            </button>
+        </div>
+
+        <!-- Tab: Upload -->
+        <div id="uploadTab" class="tab-content active">
+            <div class="card">
+                <h2>Subir Nuevo Archivo</h2>
+                <form id="uploadForm" onsubmit="uploadFile(event)">
+                    <div class="form-group">
+                        <label for="fileInput">Seleccionar Archivo:</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fileInput" name="file" required>
+                            <span class="file-name" id="fileName">Ningún archivo seleccionado</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="messageId">ID de Mensaje (opcional):</label>
+                        <input type="text" id="messageId" name="message_id" placeholder="ej: msg_123456">
+                        <small>Asocia el archivo a un mensaje específico</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="threadId">ID de Hilo (opcional):</label>
+                        <input type="text" id="threadId" name="thread_id" placeholder="ej: thread_789">
+                        <small>Asocia el archivo a un hilo de conversación</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span id="uploadBtnText">📤 Subir Archivo</span>
+                        <span id="uploadSpinner" class="spinner" style="display: none;"></span>
+                    </button>
+                </form>
+
+                <div id="uploadResult" class="result-message" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Tab: List Files -->
+        <div id="listTab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Lista de Archivos</h2>
+                    <button onclick="loadFiles()" class="btn btn-secondary">🔄 Actualizar</button>
+                </div>
+
+                <div class="filters">
+                    <input type="text" id="filterMessageId" placeholder="Filtrar por ID de mensaje">
+                    <input type="text" id="filterThreadId" placeholder="Filtrar por ID de hilo">
+                    <button onclick="loadFiles()" class="btn btn-secondary">Aplicar Filtros</button>
+                </div>
+
+                <div id="filesList" class="files-list">
+                    <p class="loading">Cargando archivos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Search -->
+        <div id="searchTab" class="tab-content">
+            <div class="card">
+                <h2>Buscar Archivo</h2>
+                <form onsubmit="searchFile(event)">
+                    <div class="form-group">
+                        <label for="searchFileId">ID del Archivo:</label>
+                        <input type="text" id="searchFileId" placeholder="ej: uuid-1234-5678" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+                </form>
+
+                <div id="searchResult" class="search-result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Tab: About -->
+        <div id="aboutTab" class="tab-content">
+            <div class="card">
+                <h2>Acerca del Sistema</h2>
+                
+                <div class="info-section">
+                    <h3>📚 Descripción</h3>
+                    <p>Sistema de gestión de archivos desarrollado como parte del trabajo de la asignatura INF326.</p>
+                    <p>Permite subir, listar, buscar y gestionar archivos asociados a mensajes e hilos de conversación.</p>
+                </div>
+
+                <div class="info-section">
+                    <h3>👥 Equipo de Desarrollo - Grupo 7</h3>
+                    <ul>
+                        <li>Felipe Campaña - 202173517-8</li>
+                        <li>Johann Vasquez - 202173577-1</li>
+                        <li>Javier Gomez - 202173519-4</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3>🛠️ Tecnologías Utilizadas</h3>
+                    <div class="tech-stack">
+                        <span class="tech-badge">FastAPI</span>
+                        <span class="tech-badge">PostgreSQL</span>
+                        <span class="tech-badge">MinIO (S3)</span>
+                        <span class="tech-badge">RabbitMQ</span>
+                        <span class="tech-badge">Kubernetes</span>
+                        <span class="tech-badge">Docker</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>🌐 Servicios</h3>
+                    <div id="servicesStatus" class="services-status">
+                        <p>Verificando servicios...</p>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>📖 Documentación API</h3>
+                    <p>
+                        <a href="http://134.199.176.197/docs" target="_blank" class="link">
+                            Documentación OpenAPI (Swagger)
+                        </a>
+                    </p>
+                    <p>
+                        <a href="https://github.com/soloimsad/INF326-2025-02.file-service" target="_blank" class="link">
+                            Repositorio en GitHub
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

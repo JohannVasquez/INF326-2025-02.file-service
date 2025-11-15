@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: file-service
+data:
+
+  USERS_SERVICE_URL: "http://users-service:8001"
+  CHANNELS_SERVICE_URL: "http://channels-service:8002"
+  THREADS_SERVICE_URL: "http://threads-service:8003"
+  MESSAGES_SERVICE_URL: "http://messages-service:8004"
+  PRESENCE_SERVICE_URL: "http://presence-service:8005"
+  MODERATION_SERVICE_URL: "http://moderation-service:8006"
+  FILES_SERVICE_URL: "http://file-service-api:8080"
+  SEARCH_SERVICE_URL: "http://search-service:8008"
+  ACADEMIC_CHATBOT_URL: "http://academic-chatbot:8009"
+  UTILITY_CHATBOT_URL: "http://utility-chatbot:8010"
+  CALC_CHATBOT_URL: "http://calc-chatbot:8011"
+  WIKI_CHATBOT_URL: "http://wiki-chatbot:8012"
+  PROGRAMMING_CHATBOT_URL: "http://programming-chatbot:8013"
+  
+  # Configuración del gateway
+  GATEWAY_PORT: "8000"
+  GATEWAY_HOST: "0.0.0.0"
+  REQUEST_TIMEOUT: "30"
+  MAX_RETRIES: "3"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: file-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: soloimsad/gateway:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: gateway-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: file-service
+spec:
+  selector:
+    app: gateway
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: file-service
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000
+      - path: /static
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000
+      - path: /docs
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000

@@ -1,0 +1,10 @@
+# Gateway
+*.pyc
+__pycache__/
+.env
+venv/
+env/
+
+# Frontend
+node_modules/
+.DS_Store

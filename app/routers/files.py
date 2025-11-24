@@ -122,5 +122,5 @@ async def presign_download(file_id: UUID, session: AsyncSession = Depends(get_se
     file = res.scalar_one_or_none()
     if not file:
         raise HTTPException(status_code=404, detail={"code":"FILE_NOT_FOUND","message":"No existe el archivo"})
-    url = presign_get(file.object_key, 3600)
+    url = presign_get(file.object_key, 3600, filename=file.filename)
     return {"url": url, "expires_in": 3600}

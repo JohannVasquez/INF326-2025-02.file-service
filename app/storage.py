@@ -30,8 +30,16 @@ def put_object(object_key: str, data, length: int, content_type: str):
     _client_internal.put_object(settings.minio_bucket, object_key, data, length, content_type=content_type)
     return settings.minio_bucket, object_key
 
-def presign_get(object_key: str, expires_seconds: int = 3600) -> str:
+def presign_get(object_key: str, expires_seconds: int = 3600, filename: str = None) -> str:
     # ¡Firmamos con el cliente público! (ya no reescribimos la URL)
+    # Añadimos response_content_disposition para forzar la descarga
+    response_headers = {}
+    if filename:
+        response_headers['response-content-disposition'] = f'attachment; filename="{filename}"'
+    
     return _client_public.presigned_get_object(
-        settings.minio_bucket, object_key, expires=timedelta(seconds=expires_seconds)
+        settings.minio_bucket, 
+        object_key, 
+        expires=timedelta(seconds=expires_seconds),
+        response_headers=response_headers if response_headers else None
     )

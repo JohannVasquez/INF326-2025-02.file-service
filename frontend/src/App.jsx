@@ -1,80 +1,26 @@
-import { useState } from 'react'
 import './App.css'
-import Users from './components/Users'
-import Channels from './components/Channels'
-import Messages from './components/Messages'
-import Files from './components/Files'
-import Search from './components/Search'
 import ChatWorkspace from './components/ChatWorkspace'
 
 function App() {
-  const [activeView, setActiveView] = useState('chat')
-
-  const renderView = () => {
-    if (activeView === 'chat') {
-      return <ChatWorkspace />
-    }
-    switch (activeView) {
-      case 'users':
-        return <Users />
-      case 'channels':
-        return <Channels />
-      case 'messages':
-        return <Messages />
-      case 'files':
-        return <Files />
-      case 'search':
-        return <Search />
-      default:
-        return <Users />
-    }
-  }
-
   return (
     <div className="app">
       <header className="header">
-        <h1>Chat Universitario</h1>
-        <nav className="nav">
-          <button 
-            className={activeView === 'chat' ? 'active' : ''}
-            onClick={() => setActiveView('chat')}
-          >
-            WhatsApp 2.0
-          </button>
-          <button 
-            className={activeView === 'users' ? 'active' : ''} 
-            onClick={() => setActiveView('users')}
-          >
-            Usuarios
-          </button>
-          <button 
-            className={activeView === 'channels' ? 'active' : ''} 
-            onClick={() => setActiveView('channels')}
-          >
-            Canales
-          </button>
-          <button 
-            className={activeView === 'messages' ? 'active' : ''} 
-            onClick={() => setActiveView('messages')}
-          >
-            Mensajes
-          </button>
-          <button 
-            className={activeView === 'files' ? 'active' : ''} 
-            onClick={() => setActiveView('files')}
-          >
-            Archivos
-          </button>
-          <button 
-            className={activeView === 'search' ? 'active' : ''} 
-            onClick={() => setActiveView('search')}
-          >
-            Búsqueda
-          </button>
-        </nav>
+        <div className="header-content">
+          <div className="logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M16 4C9.373 4 4 9.373 4 16c0 2.404.708 4.642 1.927 6.52L4.5 28l5.8-1.52A11.937 11.937 0 0016 28c6.627 0 12-5.373 12-12S22.627 4 16 4z" fill="currentColor"/>
+              <path d="M12.5 13.5h7M12.5 17.5h7" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <h1>Chat Universitario Grupo 7</h1>
+          </div>
+          <div className="header-status">
+            <span className="status-dot"></span>
+            <span>Conectado</span>
+          </div>
+        </div>
       </header>
-      <main className="container">
-        {renderView()}
+      <main className="main-content">
+        <ChatWorkspace />
       </main>
     </div>
   )

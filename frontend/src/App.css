@@ -434,6 +434,9 @@ button.secondary:hover {
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  word-wrap: break-word;
 }
 
 .loading {
@@ -452,6 +455,7 @@ button.secondary:hover {
   margin-top: 0.75rem;
   color: var(--secondary-color);
   font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .bot-reply {

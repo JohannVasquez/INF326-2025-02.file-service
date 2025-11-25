@@ -37,7 +37,9 @@ const loadStoredSession = () => {
 
 function ChatWorkspace() {
   const [session, setSession] = useState(loadStoredSession)
+  const [showRegister, setShowRegister] = useState(false)
   const [loginForm, setLoginForm] = useState({ username_or_email: '', password: '' })
+  const [registerForm, setRegisterForm] = useState({ username: '', email: '', password: '', full_name: '' })
   const [channels, setChannels] = useState([])
   const [channelFilter, setChannelFilter] = useState('')
   const [selectedChannel, setSelectedChannel] = useState(null)
@@ -124,6 +126,7 @@ function ChatWorkspace() {
   const handleLogin = async (event) => {
     event.preventDefault()
     setErrorMessage('')
+    setStatusMessage('')
     try {
       const { data: tokenData } = await usersAPI.login(loginForm)
       setAuthToken(tokenData.access_token)
@@ -136,12 +139,48 @@ function ChatWorkspace() {
       setStatusMessage('✅ Sesión iniciada')
       setLoginForm({ username_or_email: '', password: '' })
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.detail?.message ||
-        error.response?.data?.detail?.error ||
-        error.message ||
-        'Error al iniciar sesión'
-      )
+      const errorDetail = error.response?.data?.detail
+      let errorMsg = 'Error al iniciar sesión'
+      
+      if (typeof errorDetail === 'object' && errorDetail?.error) {
+        errorMsg = errorDetail.error
+      } else if (typeof errorDetail === 'string') {
+        errorMsg = errorDetail
+      } else if (error.message) {
+        errorMsg = error.message
+      }
+      
+      // Detectar error 403
+      if (error.response?.status === 403) {
+        errorMsg = '❌ Error 403: El servicio de usuarios rechazó la petición. Verifica que el usuario exista y esté activo.'
+      }
+      
+      setErrorMessage(errorMsg)
+    }
+  }
+
+  const handleRegister = async (event) => {
+    event.preventDefault()
+    setErrorMessage('')
+    setStatusMessage('')
+    try {
+      await usersAPI.create(registerForm)
+      setStatusMessage('✅ Usuario registrado. Ahora puedes iniciar sesión')
+      setRegisterForm({ username: '', email: '', password: '', full_name: '' })
+      setShowRegister(false)
+    } catch (error) {
+      const errorDetail = error.response?.data?.detail
+      let errorMsg = 'Error al registrar usuario'
+      
+      if (typeof errorDetail === 'object' && errorDetail?.error) {
+        errorMsg = errorDetail.error
+      } else if (typeof errorDetail === 'string') {
+        errorMsg = errorDetail
+      } else if (error.message) {
+        errorMsg = error.message
+      }
+      
+      setErrorMessage(errorMsg)
     }
   }
 
@@ -357,30 +396,72 @@ function ChatWorkspace() {
       <section className="chat-sidebar">
         <div className="card">
           <h2>Cuenta</h2>
+          {errorMessage && <div className="error">{errorMessage}</div>}
           {session?.user ? (
             <>
               <p><strong>Usuario:</strong> {session.user.username}</p>
               <p><strong>Email:</strong> {session.user.email}</p>
               <button onClick={handleLogout}>Cerrar sesión</button>
             </>
+          ) : showRegister ? (
+            <>
+              <form onSubmit={handleRegister} className="stacked-form">
+                <input
+                  type="text"
+                  placeholder="Nombre de usuario"
+                  value={registerForm.username}
+                  onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={registerForm.email}
+                  onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Nombre completo (opcional)"
+                  value={registerForm.full_name}
+                  onChange={(e) => setRegisterForm({ ...registerForm, full_name: e.target.value })}
+                />
+                <input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={registerForm.password}
+                  onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                  required
+                />
+                <button type="submit">Registrarse</button>
+                <button type="button" className="secondary" onClick={() => setShowRegister(false)}>
+                  Volver a iniciar sesión
+                </button>
+              </form>
+            </>
           ) : (
-            <form onSubmit={handleLogin} className="stacked-form">
-              <input
-                type="text"
-                placeholder="Usuario o email"
-                value={loginForm.username_or_email}
-                onChange={(e) => setLoginForm({ ...loginForm, username_or_email: e.target.value })}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Contraseña"
-                value={loginForm.password}
-                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                required
-              />
-              <button type="submit">Iniciar sesión</button>
-            </form>
+            <>
+              <form onSubmit={handleLogin} className="stacked-form">
+                <input
+                  type="text"
+                  placeholder="Usuario o email"
+                  value={loginForm.username_or_email}
+                  onChange={(e) => setLoginForm({ ...loginForm, username_or_email: e.target.value })}
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  required
+                />
+                <button type="submit">Iniciar sesión</button>
+                <button type="button" className="secondary" onClick={() => setShowRegister(true)}>
+                  Crear cuenta nueva
+                </button>
+              </form>
+            </>
           )}
           {statusMessage && <p className="status-message">{statusMessage}</p>}
         </div>

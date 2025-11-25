@@ -1,11 +1,33 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/gateway';
+const isBrowser = typeof window !== 'undefined';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
 });
+
+export const setAuthToken = (token) => {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    if (isBrowser) {
+      localStorage.setItem('gatewayToken', token);
+    }
+  } else {
+    delete api.defaults.headers.common.Authorization;
+    if (isBrowser) {
+      localStorage.removeItem('gatewayToken');
+    }
+  }
+};
+
+if (isBrowser) {
+  const storedToken = localStorage.getItem('gatewayToken');
+  if (storedToken) {
+    setAuthToken(storedToken);
+  }
+}
 
 // Users
 export const usersAPI = {
@@ -21,7 +43,9 @@ export const usersAPI = {
 
 // Channels
 export const channelsAPI = {
+  list: (params = {}) => api.get('/channels', { params }),
   listByOwner: (ownerId) => api.get(`/channels/owner/${ownerId}`),
+  listByMember: (userId) => api.get(`/channels/member/${userId}`),
   get: (id) => api.get(`/channels/${id}`),
   create: (data) => api.post('/channels', data), // data = { name, owner_id, users, channel_type }
   update: (id, data) => api.put(`/channels/${id}`, data),
@@ -32,14 +56,20 @@ export const channelsAPI = {
 export const messagesAPI = {
   list: (threadId, params = {}) => api.get(`/messages/threads/${threadId}`, { params }),
   get: (threadId, messageId) => api.get(`/messages/threads/${threadId}/messages/${messageId}`),
-  create: (threadId, data) => api.post(`/messages/threads/${threadId}`, data),
-  update: (threadId, messageId, data) => api.put(`/messages/threads/${threadId}/messages/${messageId}`, data),
-  delete: (threadId, messageId) => api.delete(`/messages/threads/${threadId}/messages/${messageId}`),
+  create: (threadId, data, userId) => api.post(`/messages/threads/${threadId}`, { ...data, user_id: userId }),
+  update: (threadId, messageId, data, userId) => api.put(
+    `/messages/threads/${threadId}/messages/${messageId}`,
+    { ...data, user_id: userId }
+  ),
+  delete: (threadId, messageId, userId) => api.delete(
+    `/messages/threads/${threadId}/messages/${messageId}`,
+    { params: { user_id: userId } }
+  ),
 };
 
 // Files
 export const filesAPI = {
-  list: (params) => api.get('/files', { params }),
+  list: (params = {}) => api.get('/files', { params }),
   get: (id) => api.get(`/files/${id}`),
   upload: (formData) => api.post('/files', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -50,14 +80,17 @@ export const filesAPI = {
 
 // Search
 export const searchAPI = {
-  search: (query, channelId) => api.get('/search', { 
-    params: { q: query, channel_id: channelId } 
+  global: (query, params = {}) => api.get('/search', {
+    params: { q: query, ...params },
   }),
-  searchMessages: (query, channelId) => api.get('/search/messages', { 
-    params: { q: query, channel_id: channelId } 
+  searchMessages: (query, params = {}) => api.get('/search/messages', {
+    params: { q: query, ...params },
   }),
-  searchFiles: (query) => api.get('/search/files', { 
-    params: { q: query } 
+  searchFiles: (query, params = {}) => api.get('/search/files', {
+    params: { q: query, ...params },
+  }),
+  searchChannels: (query, params = {}) => api.get('/search/channels', {
+    params: { q: query, ...params },
   }),
 };
 
@@ -68,6 +101,34 @@ export const moderationAPI = {
   getUserStatus: (userId, channelId) => api.get(`/moderation/status/${userId}/${channelId}`),
   listBanned: () => api.get('/moderation/banned-users'),
   listBlacklist: () => api.get('/moderation/blacklist/words'),
+};
+
+// Threads
+export const threadsAPI = {
+  listByChannel: (channelId) => api.get(`/threads/channel/${channelId}`),
+  listMine: (userId) => api.get(`/threads/mine/${userId}`),
+  get: (threadId) => api.get(`/threads/${threadId}`),
+  create: (data) => api.post('/threads', data),
+  update: (threadId, data) => api.put(`/threads/${threadId}`, data),
+};
+
+// Presence
+export const presenceAPI = {
+  list: (status) => api.get('/presence', { params: status ? { status } : {} }),
+  stats: () => api.get('/presence/stats'),
+  get: (userId) => api.get(`/presence/${userId}`),
+  register: (payload) => api.post('/presence', payload),
+  update: (userId, payload) => api.patch(`/presence/${userId}`, payload),
+  remove: (userId) => api.delete(`/presence/${userId}`),
+};
+
+// Chatbots
+export const wikiAPI = {
+  ask: (message) => api.post('/chat/wiki', { message }),
+};
+
+export const programmingChatAPI = {
+  ask: (message) => api.post('/chat/programming', { message }),
 };
 
 export default api;

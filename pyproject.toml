@@ -10,13 +10,13 @@ authors = [
     {name = "Grupo 7", email = "grupo7@universidad.edu"},
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.11",
 ]
 
 dependencies = [
@@ -89,7 +89,7 @@ dev = [
 
 [tool.black]
 line-length = 88
-target-version = ['py313']
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -98,7 +98,7 @@ extend-exclude = '''
 '''
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py311"
 line-length = 88
 select = [
     "E",  # pycodestyle errors
@@ -139,7 +139,7 @@ exclude = [
 "tests/*" = ["E501"]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true

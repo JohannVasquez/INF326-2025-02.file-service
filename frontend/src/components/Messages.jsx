@@ -4,6 +4,7 @@ import { messagesAPI } from '../services/api'
 function Messages() {
   const [messages, setMessages] = useState([])
   const [threadId, setThreadId] = useState('')
+  const [userId, setUserId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
@@ -38,6 +39,10 @@ function Messages() {
       setError('Debes ingresar un Thread ID para enviar mensajes')
       return
     }
+    if (!userId.trim()) {
+      setError('Debes ingresar un User ID para enviar mensajes')
+      return
+    }
     try {
       setError(null)
       const payload = {
@@ -47,7 +52,7 @@ function Messages() {
       if (formData.paths && formData.paths.length > 0) {
         payload.paths = formData.paths
       }
-      await messagesAPI.create(threadId, payload)
+      await messagesAPI.create(threadId, payload, userId.trim())
       setFormData({ content: '', message_type: 'text', paths: [] })
       setShowForm(false)
       loadMessages()
@@ -59,8 +64,12 @@ function Messages() {
   const handleDelete = async (messageId) => {
     if (!confirm('¿Eliminar este mensaje?')) return
     try {
+      if (!userId.trim()) {
+        setError('Debes ingresar un User ID para eliminar mensajes')
+        return
+      }
       setError(null)
-      await messagesAPI.delete(threadId, messageId)
+      await messagesAPI.delete(threadId, messageId, userId.trim())
       loadMessages()
     } catch (err) {
       setError(err.response?.data?.detail?.error || 'Error al eliminar mensaje')
@@ -95,6 +104,15 @@ function Messages() {
                 {loading ? 'Cargando...' : 'Cargar Mensajes'}
               </button>
             </div>
+          </div>
+          <div className="form-group">
+            <label>User ID</label>
+            <input
+              type="text"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="ID del usuario que envía/edita"
+            />
           </div>
           <p style={{ fontSize: '0.85rem', color: '#7f8c8d', marginTop: '0.5rem', marginBottom: 0 }}>
             El API de mensajes requiere un <strong>Thread ID</strong> (UUID) para cargar y enviar mensajes

@@ -1,4 +1,18 @@
 services:
+  gateway:
+    build:
+      context: ./gateway
+    container_name: api-gateway
+    env_file:
+      - gateway/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+
   api:
     build: .
     container_name: files-api

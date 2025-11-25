@@ -8,6 +8,7 @@ on:
 
 env:
   DOCKER_IMAGE: soloimsad/inf326-2025-02file-service-api
+  GATEWAY_IMAGE: soloimsad/inf326-gateway
   K8S_NAMESPACE: file-service
 
 jobs:
@@ -115,6 +116,26 @@ jobs:
         cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
         cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
 
+    - name: Extract gateway metadata
+      id: gateway-meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.GATEWAY_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Gateway image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./gateway
+        push: true
+        tags: ${{ steps.gateway-meta.outputs.tags }}
+        labels: ${{ steps.gateway-meta.outputs.labels }}
+        cache-from: type=registry,ref=${{ env.GATEWAY_IMAGE }}:buildcache
+        cache-to: type=registry,ref=${{ env.GATEWAY_IMAGE }}:buildcache,mode=max
+
   deploy:
     name: Deploy to Kubernetes
     runs-on: ubuntu-latest
@@ -206,6 +227,11 @@ jobs:
       run: |
         kubectl apply -f k8s/deployment.yaml
         kubectl rollout status deployment/file-service-api -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+
+    - name: Deploy Gateway
+      run: |
+        kubectl apply -f k8s/gateway.yaml
+        kubectl rollout status deployment/gateway -n ${{ env.K8S_NAMESPACE }} --timeout=300s || echo "Gateway deployment in progress"
 
     - name: Apply HPA
       run: |

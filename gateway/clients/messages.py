@@ -38,6 +38,7 @@ class MessagesClient(BaseClient):
         content: str,
         message_type: Optional[str] = None,
         paths: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Crear un nuevo mensaje en un thread.
@@ -53,20 +54,40 @@ class MessagesClient(BaseClient):
             payload["type"] = message_type
         if paths:
             payload["paths"] = paths
-        return await self.post(f"/threads/{thread_id}/messages", json=payload)
-    
-    async def update_message(
-        self, thread_id: str, message_id: str, content: str
-    ) -> Dict[str, Any]:
-        """Actualizar un mensaje existente"""
-        return await self.put(
-            f"/threads/{thread_id}/messages/{message_id}", 
-            json={"content": content}
+        headers = {"X-User-Id": user_id} if user_id else None
+        return await self.post(
+            f"/threads/{thread_id}/messages",
+            json=payload,
+            headers=headers,
         )
     
-    async def delete_message(self, thread_id: str, message_id: str) -> Dict[str, Any]:
+    async def update_message(
+        self,
+        thread_id: str,
+        message_id: str,
+        content: str,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Actualizar un mensaje existente"""
+        headers = {"X-User-Id": user_id} if user_id else None
+        return await self.put(
+            f"/threads/{thread_id}/messages/{message_id}",
+            json={"content": content},
+            headers=headers,
+        )
+    
+    async def delete_message(
+        self,
+        thread_id: str,
+        message_id: str,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Eliminar un mensaje de un thread"""
-        return await self.delete(f"/threads/{thread_id}/messages/{message_id}")
+        headers = {"X-User-Id": user_id} if user_id else None
+        return await self.delete(
+            f"/threads/{thread_id}/messages/{message_id}",
+            headers=headers,
+        )
 
 # Instancia global
 messages_client = MessagesClient()

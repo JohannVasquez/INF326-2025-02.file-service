@@ -5,11 +5,15 @@ import Channels from './components/Channels'
 import Messages from './components/Messages'
 import Files from './components/Files'
 import Search from './components/Search'
+import ChatWorkspace from './components/ChatWorkspace'
 
 function App() {
-  const [activeView, setActiveView] = useState('users')
+  const [activeView, setActiveView] = useState('chat')
 
   const renderView = () => {
+    if (activeView === 'chat') {
+      return <ChatWorkspace />
+    }
     switch (activeView) {
       case 'users':
         return <Users />
@@ -31,6 +35,12 @@ function App() {
       <header className="header">
         <h1>Chat Universitario</h1>
         <nav className="nav">
+          <button 
+            className={activeView === 'chat' ? 'active' : ''}
+            onClick={() => setActiveView('chat')}
+          >
+            WhatsApp 2.0
+          </button>
           <button 
             className={activeView === 'users' ? 'active' : ''} 
             onClick={() => setActiveView('users')}

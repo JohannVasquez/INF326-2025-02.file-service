@@ -8,6 +8,15 @@ class ChannelsClient(BaseClient):
     def __init__(self):
         super().__init__(settings.channels_service_url)
     
+    async def list_channels(self, page: int = 1, page_size: int = 20):
+        """Listar canales paginados"""
+        params = {"page": page, "page_size": page_size}
+        return await self.get("/v1/channels/", params=params)
+    
+    async def list_channels_by_member(self, user_id: str):
+        """Listar canales donde participa un usuario"""
+        return await self.get(f"/v1/members/{user_id}")
+    
     async def list_channels_by_owner(self, owner_id: str):
         """Listar canales por propietario"""
         return await self.get(f"/v1/members/owner/{owner_id}")

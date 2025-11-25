@@ -7,6 +7,8 @@ function Search() {
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [channelId, setChannelId] = useState('')
+  const [threadId, setThreadId] = useState('')
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -16,16 +18,22 @@ function Search() {
       setLoading(true)
       setError(null)
       let response
+      const filters = {}
+      if (channelId.trim()) filters.channel_id = channelId.trim()
+      if (threadId.trim()) filters.thread_id = threadId.trim()
 
       switch (searchType) {
         case 'messages':
-          response = await searchAPI.searchMessages(query)
+          response = await searchAPI.searchMessages(query, filters)
           break
         case 'files':
-          response = await searchAPI.searchFiles(query)
+          response = await searchAPI.searchFiles(query, filters)
+          break
+        case 'channels':
+          response = await searchAPI.searchChannels(query, filters)
           break
         default:
-          response = await searchAPI.search(query)
+          response = await searchAPI.global(query, filters)
       }
 
       setResults(response.data)
@@ -52,7 +60,26 @@ function Search() {
               <option value="all">Todo</option>
               <option value="messages">Mensajes</option>
               <option value="files">Archivos</option>
+              <option value="channels">Canales</option>
             </select>
+          </div>
+
+          <div className="form-group">
+            <label>Filtros opcionales</label>
+            <input
+              type="text"
+              placeholder="Channel ID"
+              value={channelId}
+              onChange={(e) => setChannelId(e.target.value)}
+              style={{ marginBottom: '0.5rem' }}
+            />
+            <input
+              type="text"
+              placeholder="Thread ID"
+              value={threadId}
+              onChange={(e) => setThreadId(e.target.value)}
+            />
+            <small style={{ color: '#7f8c8d' }}>Los filtros aplican si el servicio los soporta</small>
           </div>
 
           <div className="search-box">
@@ -74,7 +101,7 @@ function Search() {
 
       {results && (
         <div className="card">
-          <h3>Resultados ({Array.isArray(results) ? results.length : 0})</h3>
+          <h3>Resultados · {searchType}</h3>
           
           {!results || (Array.isArray(results) && results.length === 0) ? (
             <div className="empty">No se encontraron resultados</div>
@@ -91,7 +118,7 @@ function Search() {
               ))}
             </ul>
           ) : (
-            <div className="empty">Formato de resultados inesperado</div>
+            <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(results, null, 2)}</pre>
           )}
         </div>
       )}

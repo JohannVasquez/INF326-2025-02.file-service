@@ -197,3 +197,151 @@ button.danger:hover {
 .search-box input {
   flex: 1;
 }
+
+.chat-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.chat-sidebar,
+.chat-main,
+.chat-utility {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stacked-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scrollable {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.messages-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message-row {
+  border: 1px solid #ececec;
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: #fdfdfd;
+}
+
+.message-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  color: #7f8c8d;
+}
+
+.composer textarea {
+  min-height: 110px;
+}
+
+.composer-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.composer-actions input[type="file"] {
+  flex: 1;
+}
+
+.card .list li.active,
+.pill-list li.active {
+  border: 2px solid #3498db;
+  background: #ecf5fb;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pill-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+}
+
+.pill-list li {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #dde2e5;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.item-title {
+  font-weight: 600;
+}
+
+.presence-meta {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+}
+
+.bot-reply {
+  margin-top: 0.5rem;
+  background: #f4f9ff;
+  border-left: 4px solid #3498db;
+  padding: 0.5rem;
+  border-radius: 4px;
+  color: #2c3e50;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.toast-error {
+  background: #e74c3c;
+}
+
+.status-message {
+  margin-top: 0.75rem;
+  color: #27ae60;
+  font-weight: 500;
+}
+
+@media (max-width: 1200px) {
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+}

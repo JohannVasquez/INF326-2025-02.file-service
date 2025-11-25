@@ -1,5 +1,5 @@
 """Router para Canales"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 from clients.channels import channels_client
@@ -15,6 +15,24 @@ class ChannelCreate(BaseModel):
 class ChannelUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+
+
+@router.get("")
+async def list_channels(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
+    """Listar canales paginados"""
+    result = await channels_client.list_channels(page, page_size)
+    if "error" in result:
+        raise HTTPException(status_code=result.get("status_code", 500), detail=result)
+    return result
+
+
+@router.get("/member/{user_id}")
+async def list_channels_by_member(user_id: str):
+    """Listar canales donde participa un usuario"""
+    result = await channels_client.list_channels_by_member(user_id)
+    if "error" in result:
+        raise HTTPException(status_code=result.get("status_code", 500), detail=result)
+    return result
 
 @router.get("/owner/{owner_id}")
 async def list_channels_by_owner(owner_id: str):

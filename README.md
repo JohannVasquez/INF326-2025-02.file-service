@@ -59,6 +59,34 @@
 - **HTTP Client**: Cliente base asíncrono con manejo de errores
 - **UI**: CSS vanilla, diseño responsive
 
+## 🔧 Requisitos previos
+
+- **Python 3.11.x** (usa `pyenv`, `brew install python@3.11` o el instalador oficial para Windows)
+- **Node.js 18+** (para el frontend Vite)
+- **Docker Desktop** (para levantar MinIO/Postgres/RabbitMQ y el Gateway)
+
+### Actualizar/crear el entorno virtual con Python 3.11
+
+```powershell
+# Windows PowerShell
+Remove-Item -Recurse -Force .\.venv -ErrorAction SilentlyContinue
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+```bash
+# macOS / Linux
+rm -rf .venv
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+> Después de recrear el entorno, cualquier script (`start-local.ps1`, pruebas, etc.) usará automáticamente Python 3.11.
+
 
 ## 🚀 Inicio Rápido
 

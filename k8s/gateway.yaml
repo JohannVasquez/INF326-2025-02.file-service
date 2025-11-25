@@ -4,7 +4,7 @@ metadata:
   name: gateway
   namespace: file-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: gateway
@@ -15,27 +15,48 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: ${DOCKER_IMAGE}
+        image: soloimsad/inf326-gateway:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         env:
+        - name: APP_NAME
+          value: "api-gateway"
+        - name: APP_ENV
+          value: "production"
+        - name: APP_PORT
+          value: "8000"
+        - name: USERS_SERVICE_URL
+          value: "https://users.inf326.nursoft.dev/usersservice"
         - name: CHANNELS_SERVICE_URL
           value: "https://channel-api-134-199-176-197.nip.io"
+        - name: THREADS_SERVICE_URL
+          value: "https://threads.inf326.nursoft.dev"
         - name: MESSAGES_SERVICE_URL
           value: "https://messages-service.kroder.dev"
         - name: MODERATION_SERVICE_URL
-          value: "http://moderation-service:8000"
+          value: "https://moderation.inf326.nur.dev"
         - name: FILES_SERVICE_URL
           value: "http://134.199.176.197"
         - name: SEARCH_SERVICE_URL
-          value: "http://search-service:8000"
+          value: "https://searchservice.inf326.nursoft.dev"
+        - name: PRESENCE_SERVICE_URL
+          value: "https://presence-134-199-176-197.nip.io/api/v1.0.0"
+        - name: WIKIPEDIA_SERVICE_URL
+          value: "http://wikipedia-chatbot-134-199-176-197.nip.io"
+        - name: CHATBOT_PROGRAMMING_SERVICE_URL
+          value: "https://chatbotprogra.inf326.nursoft.dev"
+        - name: CORS_ORIGINS_RAW
+          value: "http://localhost:3000,http://localhost:5173,https://gateway-grupo7.inf326.nursoft.dev,*"
+        - name: HTTP_TIMEOUT
+          value: "30"
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "128Mi"
+            cpu: "100m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "256Mi"
+            cpu: "200m"
         livenessProbe:
           httpGet:
             path: /gateway/health
@@ -55,10 +76,36 @@ metadata:
   name: gateway
   namespace: file-service
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: gateway
   ports:
   - protocol: TCP
-    port: 80
+    port: 8000
     targetPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: file-service
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - gateway-grupo7.inf326.nursoft.dev
+    secretName: gateway-tls
+  rules:
+  - host: gateway-grupo7.inf326.nursoft.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8000

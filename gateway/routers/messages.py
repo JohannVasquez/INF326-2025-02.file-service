@@ -11,9 +11,12 @@ class MessageCreate(BaseModel):
     content: str
     message_type: Optional[str] = None  # 'text', 'audio', 'file'
     paths: Optional[List[str]] = None
+    user_id: str
 
 class MessageUpdate(BaseModel):
     content: str
+    user_id: str
+    paths: Optional[List[str]] = None
 
 @router.get("/threads/{thread_id}")
 async def list_messages(
@@ -49,7 +52,8 @@ async def create_message(thread_id: str, message: MessageCreate):
         thread_id=thread_id,
         content=message.content,
         message_type=message.message_type,
-        paths=message.paths
+        paths=message.paths,
+        user_id=message.user_id,
     )
     if "error" in result:
         raise HTTPException(status_code=result.get("status_code", 500), detail=result)
@@ -58,15 +62,20 @@ async def create_message(thread_id: str, message: MessageCreate):
 @router.put("/threads/{thread_id}/messages/{message_id}")
 async def update_message(thread_id: str, message_id: str, message: MessageUpdate):
     """Actualizar el contenido de un mensaje"""
-    result = await messages_client.update_message(thread_id, message_id, message.content)
+    result = await messages_client.update_message(
+        thread_id,
+        message_id,
+        message.content,
+        user_id=message.user_id,
+    )
     if "error" in result:
         raise HTTPException(status_code=result.get("status_code", 500), detail=result)
     return result
 
 @router.delete("/threads/{thread_id}/messages/{message_id}")
-async def delete_message(thread_id: str, message_id: str):
+async def delete_message(thread_id: str, message_id: str, user_id: str = Query(..., description="ID del usuario que ejecuta la acción")):
     """Eliminar un mensaje de un thread"""
-    result = await messages_client.delete_message(thread_id, message_id)
+    result = await messages_client.delete_message(thread_id, message_id, user_id=user_id)
     if "error" in result:
         raise HTTPException(status_code=result.get("status_code", 500), detail=result)
     return result

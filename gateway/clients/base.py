@@ -23,12 +23,26 @@ class BaseClient:
         except Exception as e:
             return {"error": str(e), "status_code": 500}
     
-    async def post(self, path: str, json: Optional[Dict] = None, data: Optional[Dict] = None, 
-                   files: Optional[Dict] = None, headers: Optional[Dict] = None):
+    async def post(
+        self,
+        path: str,
+        json: Optional[Dict] = None,
+        data: Optional[Dict] = None,
+        files: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+    ):
         """POST request"""
         url = f"{self.base_url}{path}"
         try:
-            response = await self.client.post(url, json=json, data=data, files=files, headers=headers)
+            response = await self.client.post(
+                url,
+                json=json,
+                data=data,
+                files=files,
+                headers=headers,
+                params=params,
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -36,11 +50,17 @@ class BaseClient:
         except Exception as e:
             return {"error": str(e), "status_code": 500}
     
-    async def put(self, path: str, json: Optional[Dict] = None, headers: Optional[Dict] = None):
+    async def put(
+        self,
+        path: str,
+        json: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+    ):
         """PUT request"""
         url = f"{self.base_url}{path}"
         try:
-            response = await self.client.put(url, json=json, headers=headers)
+            response = await self.client.put(url, json=json, headers=headers, params=params)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -48,13 +68,36 @@ class BaseClient:
         except Exception as e:
             return {"error": str(e), "status_code": 500}
     
-    async def delete(self, path: str, headers: Optional[Dict] = None):
+    async def delete(
+        self,
+        path: str,
+        headers: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+    ):
         """DELETE request"""
         url = f"{self.base_url}{path}"
         try:
-            response = await self.client.delete(url, headers=headers)
+            response = await self.client.delete(url, headers=headers, params=params)
             response.raise_for_status()
             return response.json() if response.text else {"success": True}
+        except httpx.HTTPStatusError as e:
+            return {"error": str(e), "status_code": e.response.status_code}
+        except Exception as e:
+            return {"error": str(e), "status_code": 500}
+
+    async def patch(
+        self,
+        path: str,
+        json: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+    ):
+        """PATCH request"""
+        url = f"{self.base_url}{path}"
+        try:
+            response = await self.client.patch(url, json=json, headers=headers, params=params)
+            response.raise_for_status()
+            return response.json()
         except httpx.HTTPStatusError as e:
             return {"error": str(e), "status_code": e.response.status_code}
         except Exception as e:

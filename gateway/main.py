@@ -6,7 +6,17 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
-from routers import users, channels, messages, moderation, files, search
+from routers import (
+    users,
+    channels,
+    messages,
+    moderation,
+    files,
+    search,
+    presence,
+    threads,
+    chatbots,
+)
 
 app = FastAPI(
     title="API Gateway - Sistema de Chat Universitario",
@@ -55,6 +65,9 @@ app.include_router(messages.router, prefix="/gateway/messages", tags=["Mensajes"
 app.include_router(moderation.router, prefix="/gateway/moderation", tags=["Moderación"])
 app.include_router(files.router, prefix="/gateway/files", tags=["Archivos"])
 app.include_router(search.router, prefix="/gateway/search", tags=["Búsqueda"])
+app.include_router(presence.router, prefix="/gateway/presence", tags=["Presencia"])
+app.include_router(threads.router, prefix="/gateway/threads", tags=["Threads"])
+app.include_router(chatbots.router, prefix="/gateway/chat", tags=["Chatbots"])
 
 @app.get("/")
 async def root():
